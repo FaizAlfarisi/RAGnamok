@@ -1,0 +1,58 @@
+# Environment
+.env
+.env.local
+backend/.env
+frontend-local/.env
+
+# Python
+.venv/
+venv/
+*.pyc
+__pycache__/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# App data (local dev path + Docker volume mount host path)
+data/
+backend/data/
+docs/
+eval/
+
+# Logs
+*.log
+
+# Streamlit
+.streamlit/
+frontend-local/.streamlit/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Misc
+NUL
+.ignore
+ollama_test.json
+
+# Notebooks (too large for version control)
+multimodal_multivector.ipynb
+
+# Eval artifacts (regeneratable from scripts)
+eval/*.html
+eval/*.csv
+
+# Pre-upgrade dep snapshot
+pre-upgrade-deps.txt
+
+# Agent / internal
+.agents/
+AGENTS.md
+project-commands/
