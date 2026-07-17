@@ -2,6 +2,7 @@ COMPOSE = $(ENGINE) compose
 
 # Platform detection
 ifeq ($(OS),Windows_NT)
+PYTHON     := python
 ENGINE := $(shell where podman 2>nul && echo podman || echo docker)
 VENV_PYTHON := .venv/Scripts/python
 VENV_PIP   := .venv/Scripts/pip
@@ -15,6 +16,7 @@ RMDIR      := powershell -Command Remove-Item -Recurse -Force -Path
 SETUP_COPY := powershell -Command "if (-not (Test-Path .env)) { Copy-Item -Path backend/.env.example -Destination .env }"
 PULL_MODELS := powershell -ExecutionPolicy Bypass -File scripts/pull-ollama-model.ps1
 else
+PYTHON     := python3
 ENGINE := $(shell command -v podman >/dev/null 2>&1 && echo podman || echo docker)
 VENV_PYTHON := .venv/bin/python
 VENV_PIP   := .venv/bin/pip
@@ -37,11 +39,11 @@ HIGH_MODEL      := gemma3:12b
 .PHONY: setup install install-backend install-frontend up down logs backend-dev frontend-dev migrate-db gpu-up pull-models pull-model-light pull-model-default pull-model-high full clean prune help
 
 .venv:
-	python -m venv .venv
+	$(PYTHON) -m venv .venv
 	@echo "Virtual environment created."
 
 setup:
-	python -c "from pathlib import Path; [p.mkdir(parents=True, exist_ok=True) for p in (Path('backend/data/docs'), Path('backend/data/images'))]"
+	$(PYTHON) -c "from pathlib import Path; [p.mkdir(parents=True, exist_ok=True) for p in (Path('backend/data/docs'), Path('backend/data/images'))]"
 	$(SETUP_COPY)
 	@echo "Setup complete. Run 'make install' to install dependencies (dev mode)."
 
