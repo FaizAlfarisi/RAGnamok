@@ -13,8 +13,11 @@ async def ensure_model(model_key: str) -> None:
         return
     model = getattr(settings, model_key)
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.get(f"{settings.ollama_base_url}/api/tags")
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(
+                f"{settings.ollama_cloud_base_url}/api/tags",
+                headers={"Authorization": f"Bearer {settings.ollama_api_key}"},
+            )
             resp.raise_for_status()
             data = resp.json()
             available = [m["name"] for m in data.get("models", [])]
@@ -29,5 +32,5 @@ async def ensure_model(model_key: str) -> None:
                     model,
                 )
     except Exception as exc:
-        logger.debug("Could not verify model '%s': %s", model, exc)
+        logger.warning("Could not verify model '%s': %s", model, exc)
     _checked.add(model_key)
