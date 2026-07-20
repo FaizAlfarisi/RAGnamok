@@ -13,15 +13,22 @@ class Settings(BaseSettings):
     db_user: str = "postgres"
     db_password: str = "change-me"
 
-    # Ollama LLM
+    # Ollama LLM (local)
     ollama_base_url: str = "http://localhost:11434"
-    summarization_model: str = "minicpm-v4.6:latest"
-    generation_model: str = "minicpm-v4.6:latest"
+
+    # Ollama Cloud
+    ollama_api_key: str = ""
+    ollama_cloud_base_url: str = "https://ollama.com"
+    summarization_model: str = "gemma4:31b"
+    generation_model: str = "gemma4:31b"
     summarization_temperature: float = 0.3
     generation_temperature: float = 0.1
 
-    # Embedding
-    embedding_model_name: str = "blaifa/multilingual-e5-large-instruct:Q8_0"
+    # Embedding (Jina AI)
+    jina_api_key: str = ""
+
+    # Demo mode
+    demo_mode: bool = False
 
     # App
     cors_origins: str = "http://localhost:8501,http://127.0.0.1:8501"
@@ -48,7 +55,7 @@ class Settings(BaseSettings):
         )
         return (
             f"postgresql+asyncpg://{self.db_user}:{self.db_password}"
-            f"@{host}:{self.db_port}/{self.db_name}"
+            f"@{host}:{self.db_port}/{self.db_name}?sslmode=require"
         )
 
 
