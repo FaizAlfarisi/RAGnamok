@@ -18,13 +18,6 @@ from app.db.crud import (
     update_document_status,
     update_task,
 )
-from app.services.embedder import embed_batch
-from app.services.parser import parse_pdf
-from app.services.summarizer import (
-    summarize_images,
-    summarize_tables,
-    summarize_texts,
-)
 from app.utils.file_handler import ensure_dirs, save_image, save_uploaded_file
 
 logger = logging.getLogger(__name__)
@@ -37,6 +30,14 @@ _processing_tasks: dict[str, asyncio.Task] = {}
 
 
 async def _process_pdf(task_id: str, doc_id: str, file_path: str, filename: str):
+    from app.services.embedder import embed_batch
+    from app.services.parser import parse_pdf
+    from app.services.summarizer import (
+        summarize_images,
+        summarize_tables,
+        summarize_texts,
+    )
+
     async with async_session() as session:
         try:
             await update_task(session, task_id, "processing", "Parsing PDF...")
@@ -149,6 +150,8 @@ async def upload_pdf(
     file: UploadFile = File(...),
     auto_index: bool = True,
 ):
+    if settings.demo_mode:
+        raise HTTPException(status_code=503, detail="Upload disabled in demo mode")
     if not file.filename or not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
 
@@ -167,11 +170,11 @@ async def upload_pdf(
     async with async_session() as session:
         doc_id = await insert_document(session, filename)
 
-    if auto_index:
-        task_id = str(uuid.uuid4())
-        async with async_session() as session:
+        if auto_index:
+            task_id = str(uuid.uuid4())
             await insert_task(session, task_id, filename, doc_id)
 
+    if auto_index:
         task = asyncio.create_task(
             _process_pdf(task_id, doc_id, str(file_path), filename)
         )

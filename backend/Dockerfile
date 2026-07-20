@@ -8,8 +8,7 @@ RUN apt-get update -o Acquire::Retries=3 -o Acquire::http::Timeout=30 && apt-get
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --default-timeout=300 --no-cache-dir --user torch --index-url https://download.pytorch.org/whl/cpu --no-deps \
- && pip install --default-timeout=300 --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu --user -r requirements.txt \
+RUN pip install --default-timeout=300 --no-cache-dir --user -r requirements.txt \
  && pip uninstall -y opencv-python opencv-contrib-python 2>/dev/null; \
     pip install --default-timeout=300 --no-cache-dir --user opencv-python-headless \
  && rm -rf /root/.cache/pip
@@ -35,4 +34,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')" || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers=2"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers=1"]
