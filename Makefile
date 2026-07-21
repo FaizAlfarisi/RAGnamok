@@ -74,7 +74,7 @@ migrate-db:
 	$(COMPOSE) exec -T db psql -U postgres -d ragdb < backend/db/migrations/001_init_schema.sql
 
 gpu-up:
-	$(COMPOSE) -f docker-compose.yml -f docker-compose.gpu.yml --profile full up -d
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.gpu.yml up -d backend frontend-local
 
 pull-models:
 	$(PULL_MODELS) $(MODELS)
@@ -89,7 +89,7 @@ pull-model-high:
 	$(PULL_MODELS) $(HIGH_MODEL)
 
 full:
-	$(COMPOSE) --profile full up -d --build
+	$(COMPOSE) up -d --build backend frontend-local
 
 clean:
 	$(RMDIR) .venv
