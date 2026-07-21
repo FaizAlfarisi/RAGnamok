@@ -1,13 +1,25 @@
-"""Test the simple stateless chat endpoint and upload pipeline."""
+"""Test the simple stateless chat endpoint and upload pipeline.
+
+Tests that require Jina AI or Ollama Cloud API keys are conditionally
+skipped when keys are not configured in .env.
+"""
 
 import asyncio
 
 import pytest
 
+from app.config import settings
+
+_HAVE_API_KEYS = bool(settings.jina_api_key and settings.ollama_api_key)
+
 
 @pytest.mark.asyncio
 class TestSimpleChat:
 
+    @pytest.mark.skipif(
+        not _HAVE_API_KEYS,
+        reason="Requires JINA_API_KEY and OLLAMA_API_KEY",
+    )
     async def test_chat_basic(self, async_client):
         resp = await async_client.post(
             "/api/v1/chat", json={"query": "Apa itu RAG?", "top_k": 3}
@@ -20,6 +32,10 @@ class TestSimpleChat:
         assert "sources" in body
         assert "images" in body
 
+    @pytest.mark.skipif(
+        not _HAVE_API_KEYS,
+        reason="Requires JINA_API_KEY and OLLAMA_API_KEY",
+    )
     async def test_chat_top_k_clamped(self, async_client):
         resp = await async_client.post(
             "/api/v1/chat", json={"query": "Test", "top_k": 0}
@@ -39,14 +55,29 @@ class TestSimpleChat:
 @pytest.mark.asyncio
 class TestUpload:
 
-    async def test_upload_non_pdf(self, async_client):
+    async def test_upload_non_pdf(self, async_client, monkeypatch):
+        monkeypatch.setattr("app.routers.upload.settings.demo_mode", False)
         resp = await async_client.post(
             "/api/v1/upload",
             files={"file": ("test.txt", b"not a pdf", "text/plain")},
         )
         assert resp.status_code == 400
 
-    async def test_upload_valid_pdf(self, async_client, sample_pdf):
+    async def test_upload_in_demo_mode(self, async_client, monkeypatch):
+        monkeypatch.setattr("app.routers.upload.settings.demo_mode", True)
+        resp = await async_client.post(
+            "/api/v1/upload",
+            files={"file": ("test.pdf", b"%PDF-some content", "application/pdf")},
+        )
+        assert resp.status_code == 503
+        assert "demo" in resp.json()["detail"].lower()
+
+    @pytest.mark.skipif(
+        not _HAVE_API_KEYS,
+        reason="Requires JINA_API_KEY and OLLAMA_API_KEY",
+    )
+    async def test_upload_valid_pdf(self, async_client, sample_pdf, monkeypatch):
+        monkeypatch.setattr("app.routers.upload.settings.demo_mode", False)
         resp = await async_client.post(
             "/api/v1/upload",
             files={"file": ("test.pdf", sample_pdf, "application/pdf")},

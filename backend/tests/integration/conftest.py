@@ -12,6 +12,9 @@ async def _clean_integration_data():
     async with test_async_session() as session:
         await session.execute(text("DELETE FROM chunk_summaries"))
         await session.execute(text("DELETE FROM document_chunks"))
+        await session.execute(text("DELETE FROM chat_messages"))
+        await session.execute(text("DELETE FROM chat_sessions"))
+        await session.execute(text("DELETE FROM tasks"))
         await session.execute(text("DELETE FROM documents"))
         await session.commit()
     yield

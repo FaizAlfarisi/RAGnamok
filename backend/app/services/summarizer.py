@@ -11,14 +11,19 @@ def _create_text_summarizer():
     model = ChatOllama(
         temperature=settings.summarization_temperature,
         model=settings.summarization_model,
-        base_url=settings.ollama_base_url,
+        base_url=settings.ollama_cloud_base_url,
+        client_kwargs={"headers": {"Authorization": f"Bearer {settings.ollama_api_key}"}},
     )
     prompt = ChatPromptTemplate.from_template(TEXT_SUMMARY_PROMPT)
     return {"element": lambda x: x} | prompt | model | StrOutputParser()
 
 
 def _create_image_summarizer():
-    llm = ChatOllama(model=settings.summarization_model, base_url=settings.ollama_base_url)
+    llm = ChatOllama(
+        model=settings.summarization_model,
+        base_url=settings.ollama_cloud_base_url,
+        client_kwargs={"headers": {"Authorization": f"Bearer {settings.ollama_api_key}"}},
+    )
     messages = [
         (
             "user",

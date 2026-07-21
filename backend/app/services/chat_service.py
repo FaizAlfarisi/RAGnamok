@@ -1,5 +1,6 @@
 import logging
 
+from app.config import settings
 from app.db.crud import (
     get_chat_history,
     save_message,
@@ -20,8 +21,11 @@ async def handle_chat_message(
     # 2. Retrieve context
     context = await retrieve_context(query, top_k)
 
-    # 3. Load chat history
-    history = await get_chat_history(db_session, session_id, depth=history_depth)
+    # 3. Load chat history (skip in demo mode — stateless answers)
+    if settings.demo_mode:
+        history = []
+    else:
+        history = await get_chat_history(db_session, session_id, depth=history_depth)
 
     # 4. Generate answer
     try:

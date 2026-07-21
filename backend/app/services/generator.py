@@ -83,7 +83,8 @@ def _get_llm():
         _llm_instance = ChatOllama(
             model=settings.generation_model,
             temperature=settings.generation_temperature,
-            base_url=settings.ollama_base_url,
+            base_url=settings.ollama_cloud_base_url,
+            client_kwargs={"headers": {"Authorization": f"Bearer {settings.ollama_api_key}"}},
             timeout=900,
         )
         _llm_loop_id = loop_id
@@ -96,5 +97,5 @@ async def generate_answer(
     await ensure_model("generation_model")
     llm = _get_llm()
     messages = _build_multimodal_prompt(context, question, history)
-    response = await llm.ainvoke(messages)
+    response = await llm.ainvoke(messages, stream=False)
     return response.content

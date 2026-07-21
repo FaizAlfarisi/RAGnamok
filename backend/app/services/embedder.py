@@ -1,6 +1,6 @@
 import logging
 
-import httpx
+import aiohttp
 
 from app.config import settings
 
@@ -11,8 +11,8 @@ JINA_MODEL = "jina-embeddings-v3"
 
 async def _embed(inputs: list[str], task: str) -> list[list[float]]:
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+            async with session.post(
                 JINA_URL,
                 headers={
                     "Authorization": f"Bearer {settings.jina_api_key}",
@@ -24,9 +24,10 @@ async def _embed(inputs: list[str], task: str) -> list[list[float]]:
                     "task": task,
                     "dimensions": 1024,
                 },
-            )
-            resp.raise_for_status()
-            return [item["embedding"] for item in resp.json()["data"]]
+            ) as resp:
+                resp.raise_for_status()
+                data = await resp.json()
+                return [item["embedding"] for item in data["data"]]
     except Exception as e:
         logger.error("Jina embedding failed: %s", e)
         return [[0.0] * 1024 for _ in inputs]

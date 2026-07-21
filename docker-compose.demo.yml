@@ -1,0 +1,83 @@
+services:
+  db:
+    image: ankane/pgvector:latest
+    environment:
+      POSTGRES_DB: ragdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change-me}
+    ports:
+      - "127.0.0.1:5433:5432"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    volumes:
+      - pgvector_demo_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ragnamok_demo
+    restart: unless-stopped
+
+  backend:
+    image: ragnamok/backend:demo
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8000:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    volumes:
+      - ./backend/data:/app/data
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=ragdb
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-change-me}
+      - OLLAMA_CLOUD_BASE_URL=https://ollama.com
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - JINA_API_KEY=${JINA_API_KEY}
+      - SUMMARIZATION_MODEL=${SUMMARIZATION_MODEL:-gemma4:31b}
+      - GENERATION_MODEL=${GENERATION_MODEL:-gemma4:31b}
+      - CORS_ORIGINS=http://localhost:8501,http://127.0.0.1:8501
+      - DEMO_MODE=true
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - ragnamok_demo
+    restart: unless-stopped
+
+  frontend-local:
+    image: ragnamok/frontend:demo
+    build:
+      context: ./frontend-local
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8501:8501"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    environment:
+      - BACKEND_URL=http://backend:8000/api/v1
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - ragnamok_demo
+    restart: unless-stopped
+
+volumes:
+  pgvector_demo_data:
+
+networks:
+  ragnamok_demo:
+    driver: bridge

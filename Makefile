@@ -107,7 +107,10 @@ test: .venv
 	$(VENV_PYTHON) -m pytest backend$(SEP)tests -v --tb=short
 
 test-unit: .venv
-	$(VENV_PYTHON) -m pytest backend$(SEP)tests$(SEP)unit -v --tb=short
+	$(VENV_PYTHON) -m pytest backend$(SEP)tests$(SEP)unit backend$(SEP)tests$(SEP)mocked -v --tb=short
+
+test-mocked: .venv
+	$(VENV_PYTHON) -m pytest backend$(SEP)tests$(SEP)mocked -v --tb=short
 
 test-integration: .venv
 	$(VENV_PYTHON) -m pytest backend$(SEP)tests$(SEP)integration -v --tb=short
@@ -120,8 +123,9 @@ help:
 	@echo "  setup            - Create .env and data directories"
 	@echo "  install          - Install backend + frontend deps into .venv"
 	@echo "  install-test-deps - Install test dependencies"
-	@echo "  test             - Run all tests (unit + integration)"
-	@echo "  test-unit        - Run unit tests only"
+	@echo "  test             - Run all tests (unit + integration + mocked)"
+	@echo "  test-unit        - Run DB unit tests + mocked unit tests"
+	@echo "  test-mocked      - Run mocked-only unit tests (no infra)"
 	@echo "  test-integration - Run integration tests only"
 	@echo "  test-cov         - Run all tests with coverage"
 	@echo "  up               - Start DB + Ollama containers"

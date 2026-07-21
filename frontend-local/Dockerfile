@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN useradd -m -u 1000 appuser \
  && mkdir -p .streamlit \
- && printf '[theme]\nbase = "light"\nprimaryColor = "#5B7B6A"\nbackgroundColor = "#F1F0EC"\nsecondaryBackgroundColor = "#F9F8F6"\ntextColor = "#1C1A17"\nfont = "sans serif"\n\n[server]\nmaxUploadSize = 50\n\n[browser]\ngatherUsageStats = false\n' > .streamlit/config.toml
+ && printf '[theme]\nbase = "dark"\nprimaryColor = "#7BAF8A"\nbackgroundColor = "#1A1A1A"\nsecondaryBackgroundColor = "#2A2A2A"\ntextColor = "#E8E6E3"\nfont = "sans serif"\n\n[server]\nmaxUploadSize = 50\n\n[browser]\ngatherUsageStats = false\n' > .streamlit/config.toml
 
 USER appuser
 

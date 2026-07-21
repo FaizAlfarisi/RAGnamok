@@ -4,6 +4,14 @@ import asyncio
 
 import pytest
 
+from app.config import settings
+
+_HAVE_API_KEYS = bool(settings.jina_api_key and settings.ollama_api_key)
+
+
+def _disable_demo(monkeypatch):
+    monkeypatch.setattr("app.routers.upload.settings.demo_mode", False)
+
 
 @pytest.mark.asyncio
 class TestSQLInjection:
@@ -29,7 +37,8 @@ class TestSQLInjection:
         list_resp = await async_client.get("/api/v1/chat/sessions")
         assert list_resp.status_code == 200
 
-    async def test_sql_injection_in_upload_filename(self, async_client):
+    async def test_sql_injection_in_upload_filename(self, async_client, monkeypatch):
+        _disable_demo(monkeypatch)
         resp = await async_client.post(
             "/api/v1/upload",
             files={
@@ -65,7 +74,8 @@ class TestSQLInjection:
 class TestPathTraversal:
     """Test path traversal prevention."""
 
-    async def test_upload_path_traversal_filename(self, async_client):
+    async def test_upload_path_traversal_filename(self, async_client, monkeypatch):
+        _disable_demo(monkeypatch)
         resp = await async_client.post(
             "/api/v1/upload",
             files={
@@ -74,7 +84,8 @@ class TestPathTraversal:
         )
         assert resp.status_code in (400, 201)
 
-    async def test_upload_backslash_filename(self, async_client):
+    async def test_upload_backslash_filename(self, async_client, monkeypatch):
+        _disable_demo(monkeypatch)
         resp = await async_client.post(
             "/api/v1/upload",
             files={
@@ -87,7 +98,8 @@ class TestPathTraversal:
         )
         assert resp.status_code in (400, 201)
 
-    async def test_upload_null_byte_filename(self, async_client):
+    async def test_upload_null_byte_filename(self, async_client, monkeypatch):
+        _disable_demo(monkeypatch)
         resp = await async_client.post(
             "/api/v1/upload",
             files={
@@ -101,7 +113,8 @@ class TestPathTraversal:
 class TestConcurrentOperations:
     """Test concurrent upload and chat operations."""
 
-    async def test_concurrent_uploads(self, async_client, sample_pdf):
+    async def test_concurrent_uploads(self, async_client, sample_pdf, monkeypatch):
+        _disable_demo(monkeypatch)
         tasks = []
         for i in range(3):
             task = async_client.post(

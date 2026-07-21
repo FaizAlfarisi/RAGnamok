@@ -1,9 +1,25 @@
-"""Comprehensive chat/query system tests — retrieval, top_k, edge cases."""
+"""Comprehensive chat/query system tests — retrieval, top_k, edge cases.
+
+Tests that hit the real LLM/embedder require API keys in .env and are
+skipped when keys are missing.
+"""
 
 import pytest
 
+from app.config import settings
+
+_HAVE_API_KEYS = bool(settings.jina_api_key and settings.ollama_api_key)
+
+
+def _disable_demo(monkeypatch):
+    monkeypatch.setattr("app.routers.upload.settings.demo_mode", False)
+
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    not _HAVE_API_KEYS,
+    reason="Requires JINA_API_KEY and OLLAMA_API_KEY",
+)
 class TestChatEndpoint:
     """Test stateless /api/v1/chat endpoint."""
 
@@ -89,6 +105,11 @@ class TestChatEndpoint:
         )
         assert resp.status_code == 200
 
+
+@pytest.mark.asyncio
+class TestChatEndpointValidation:
+    """Validation-only tests (always run, no API keys needed)."""
+
     async def test_chat_missing_body(self, async_client):
         resp = await async_client.post("/api/v1/chat")
         assert resp.status_code == 422
@@ -103,6 +124,10 @@ class TestChatEndpoint:
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    not _HAVE_API_KEYS,
+    reason="Requires JINA_API_KEY and OLLAMA_API_KEY",
+)
 class TestChatWithDocuments:
     """Test chat behavior with uploaded/indexed documents."""
 
@@ -115,7 +140,8 @@ class TestChatWithDocuments:
         assert isinstance(body["answer"], str)
         assert isinstance(body["sources"], list)
 
-    async def test_chat_with_uploaded_not_indexed(self, async_client, sample_pdf):
+    async def test_chat_with_uploaded_not_indexed(self, async_client, sample_pdf, monkeypatch):
+        _disable_demo(monkeypatch)
         up_resp = await async_client.post(
             "/api/v1/upload?auto_index=false",
             files={"file": ("notindexed.pdf", sample_pdf, "application/pdf")},
@@ -129,7 +155,8 @@ class TestChatWithDocuments:
         body = resp.json()
         assert len(body["sources"]) == 0
 
-    async def test_chat_with_disabled_document(self, async_client, sample_pdf):
+    async def test_chat_with_disabled_document(self, async_client, sample_pdf, monkeypatch):
+        _disable_demo(monkeypatch)
         up_resp = await async_client.post(
             "/api/v1/upload",
             files={"file": ("disabled.pdf", sample_pdf, "application/pdf")},
@@ -152,7 +179,8 @@ class TestChatWithDocuments:
         body = resp.json()
         assert len(body["sources"]) == 0
 
-    async def test_chat_with_deleted_document(self, async_client, sample_pdf):
+    async def test_chat_with_deleted_document(self, async_client, sample_pdf, monkeypatch):
+        _disable_demo(monkeypatch)
         up_resp = await async_client.post(
             "/api/v1/upload",
             files={"file": ("deleted.pdf", sample_pdf, "application/pdf")},

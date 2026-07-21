@@ -26,7 +26,7 @@ import logging
 
 from app.config import settings
 from app.db.connection import engine, init_db
-from app.routers import chat, chat_sessions, documents, health, tasks, upload
+from app.routers import chat, chat_sessions, diagnose, documents, health, tasks, upload
 from app.utils.file_handler import ensure_dirs
 
 logger = logging.getLogger(__name__)
@@ -78,3 +78,4 @@ app.include_router(chat_sessions.router)
 app.include_router(tasks.router)
 app.include_router(documents.router)
 app.include_router(health.router)
+app.include_router(diagnose.router)

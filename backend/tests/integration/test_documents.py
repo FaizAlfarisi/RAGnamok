@@ -4,6 +4,10 @@ import asyncio
 
 import pytest
 
+from app.config import settings
+
+_HAVE_API_KEYS = bool(settings.jina_api_key and settings.ollama_api_key)
+
 
 @pytest.mark.asyncio
 class TestDocuments:
@@ -31,8 +35,9 @@ class TestDocuments:
         )
         assert resp.status_code == 404
 
-    async def test_upload_without_auto_index(self, async_client, sample_pdf):
+    async def test_upload_without_auto_index(self, async_client, sample_pdf, monkeypatch):
         """Upload without auto-index — doc should be 'uploaded' status."""
+        monkeypatch.setattr("app.routers.upload.settings.demo_mode", False)
         resp = await async_client.post(
             "/api/v1/upload?auto_index=false",
             files={"file": ("doc_test.pdf", sample_pdf, "application/pdf")},
@@ -48,9 +53,14 @@ class TestDocuments:
         assert get_resp.json()["status"] == "uploaded"
         assert get_resp.json()["enabled"] is False
 
+    @pytest.mark.skipif(
+        not _HAVE_API_KEYS,
+        reason="Indexing requires JINA_API_KEY and OLLAMA_API_KEY",
+    )
     async def test_upload_then_index_then_toggle_then_delete(
-        self, async_client, sample_pdf
+        self, async_client, sample_pdf, monkeypatch
     ):
+        monkeypatch.setattr("app.routers.upload.settings.demo_mode", False)
         # Upload (no auto-index)
         up_resp = await async_client.post(
             "/api/v1/upload?auto_index=false",
